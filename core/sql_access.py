@@ -69,14 +69,7 @@ class SqlAccess():
         
     def _question_mark_creator(self,
                                n_question_marks):
-        final_string = ''
-        
-        for i in range(n_question_marks):
-            final_string += '?,'
-            
-        final_string += '?'
-        
-        return final_string
+        return ''.join('?,' for _ in range(n_question_marks)) + '?'
 
     def insert(self,
                table,
@@ -88,27 +81,26 @@ class SqlAccess():
             not be possible with .executemany() instead of .execute()
         '''
         c = self.conn.cursor()
-        
+
         # Get the column names of the table we are trying to insert into
         cols = c.execute(('''
                         PRAGMA table_info({0})
                         ''').format(table))
-        
+
         # Get the number of columns
-        num_cols = sum([1 for i in cols]) - 1
-        
+        num_cols = sum(1 for _ in cols) - 1
+
         # Generate question marks for VALUES insertion
         question_marks = self._question_mark_creator(num_cols)
-        
+
         if table == 'post':
             c.execute(('''INSERT INTO {0}
                           VALUES ({1})'''
                       ).format(table, question_marks), data)
-            
+
             self.last_post_id = c.lastrowid
-            
-        elif (table == 'comment' or table == 'link') \
-             and data != None and data != []:
+
+        elif table in ['comment', 'link'] and data != None and data != []:
             # setting post_id to the last post id, inserted in the post insert
             for table_data in data:
                 table_data[1] = self.last_post_id
